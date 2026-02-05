@@ -1,4 +1,4 @@
-package kms
+package cryptoutil
 
 import (
 	"crypto/aes"

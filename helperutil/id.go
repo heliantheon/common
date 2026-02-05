@@ -1,6 +1,5 @@
-// Package utils provides utility functions for the application.
-// nolint:revive // This package name is intentional for collecting misc utilities.
-package utils
+// Package helperutil provides utility functions for the application.
+package helperutil
 
 import (
 	"crypto/rand"
@@ -48,4 +47,28 @@ func GenerateID(length int) string {
 // GenerateRecipeID 生成菜谱 ID（22位 Base62）
 func GenerateRecipeID() string {
 	return GenerateID(22)
+}
+
+// GenerateJTI 生成 Token ID（16位 Base62）
+func GenerateJTI() string {
+	return GenerateID(16)
+}
+
+// GenerateOTP 生成数字验证码
+// length: 验证码长度（默认 6）
+func GenerateOTP(length int) (string, error) {
+	if length <= 0 {
+		length = 6
+	}
+
+	const digits = "0123456789"
+	result := make([]byte, length)
+	for i := range result {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(digits))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = digits[n.Int64()]
+	}
+	return string(result), nil
 }
