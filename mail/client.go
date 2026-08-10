@@ -11,8 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/heliantheon/common/logger"
 	"github.com/knadh/smtppool/v2"
+
+	"github.com/heliantheon/common/logger"
 )
 
 const (
