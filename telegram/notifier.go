@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/heliannuuthus/pkg/logger"
+	"github.com/heliannuuthus/common/logger"
 )
 
 // Notifier 通知发送器，封装常用的消息发送场景

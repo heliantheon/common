@@ -1,0 +1,33 @@
+# Common
+
+Shared Go packages used by the Helios services. This repository is for code that is independent of a product domain: configuration, database and Redis clients, logging, pagination, patch handling, mail, throttling, and small infrastructure helpers.
+
+Authentication-specific code belongs in [`aegis-go`](https://github.com/heliannuuthus/aegis-go). Service contracts belong in [`proto`](https://github.com/heliannuuthus/proto).
+
+## Install
+
+```bash
+go get github.com/heliannuuthus/common
+```
+
+Import the package you need directly:
+
+```go
+import "github.com/heliannuuthus/common/pagination"
+```
+
+## Development
+
+```bash
+make test
+make lint
+make tidy
+```
+
+The API query conventions implemented by `filter`, `pagination`, and `patch` are documented in [`docs/api-query-design.md`](docs/api-query-design.md).
+
+## Package policy
+
+- Packages must not depend on a Helios service or a product domain.
+- Prefer a small package with an explicit API over a general-purpose utility bucket.
+- Breaking changes require all known consumers to be migrated first.
