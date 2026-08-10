@@ -13,7 +13,7 @@ import (
 
 	"github.com/knadh/smtppool/v2"
 
-	"github.com/heliannuuthus/common/logger"
+	"github.com/heliantheon/common/logger"
 )
 
 const (

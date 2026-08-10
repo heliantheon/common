@@ -2,18 +2,18 @@
 
 Shared Go packages used by the Helios services. This repository is for code that is independent of a product domain: configuration, database and Redis clients, logging, pagination, patch handling, mail, throttling, and small infrastructure helpers.
 
-Authentication-specific code belongs in [`aegis-go`](https://github.com/heliannuuthus/aegis-go). Service contracts belong in [`proto`](https://github.com/heliannuuthus/proto).
+Authentication-specific code belongs in [`aegis-go`](https://github.com/heliantheon/aegis-go). Service contracts belong in [`proto`](https://github.com/heliantheon/proto).
 
 ## Install
 
 ```bash
-go get github.com/heliannuuthus/common/pagination
+go get github.com/heliantheon/common/pagination
 ```
 
 Import the package you need directly:
 
 ```go
-import "github.com/heliannuuthus/common/pagination"
+import "github.com/heliantheon/common/pagination"
 ```
 
 ## Development

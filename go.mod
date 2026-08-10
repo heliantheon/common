@@ -1,4 +1,4 @@
-module github.com/heliannuuthus/common
+module github.com/heliantheon/common
 
 go 1.26
 
