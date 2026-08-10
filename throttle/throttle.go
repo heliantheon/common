@@ -12,8 +12,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/heliannuuthus/pkg/helpers"
-	"github.com/heliannuuthus/pkg/redis"
+	"github.com/heliannuuthus/common/helpers"
+	"github.com/heliannuuthus/common/redis"
 )
 
 // peekScript 多窗口只读检查（不写入）

@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/heliannuuthus/pkg/logger"
-	"github.com/heliannuuthus/pkg/throttle"
+	"github.com/heliannuuthus/common/logger"
+	"github.com/heliannuuthus/common/throttle"
 )
 
 // ACAction 访问控制决策
