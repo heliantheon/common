@@ -7,7 +7,7 @@ Authentication-specific code belongs in [`aegis-go`](https://github.com/heliannu
 ## Install
 
 ```bash
-go get github.com/heliannuuthus/common
+go get github.com/heliannuuthus/common/pagination
 ```
 
 Import the package you need directly:
