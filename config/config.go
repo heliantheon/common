@@ -16,10 +16,10 @@ const (
 	ConfigFile = "config"
 
 	// 配置名称
-	ZweiConfigName   = "zwei"
-	HermesConfigName = "hermes"
-	AegisConfigName  = "aegis"
-	ChaosConfigName  = "chaos"
+	AmbrosiaConfigName = "ambrosia"
+	HermesConfigName   = "hermes"
+	AegisConfigName    = "aegis"
+	ChaosConfigName    = "chaos"
 )
 
 // Cfg 配置实例包装器
@@ -31,21 +31,21 @@ type Cfg struct {
 
 // 配置单例
 var (
-	cfg       *Cfg // 当前服务配置
-	zweiCfg   *Cfg
-	hermesCfg *Cfg
-	aegisCfg  *Cfg
-	chaosCfg  *Cfg
+	cfg         *Cfg // 当前服务配置
+	ambrosiaCfg *Cfg
+	hermesCfg   *Cfg
+	aegisCfg    *Cfg
+	chaosCfg    *Cfg
 )
 
-// LoadZwei 加载 Zwei 配置
-func LoadZwei() {
-	if zweiCfg != nil {
-		cfg = zweiCfg
+// LoadAmbrosia 加载 Ambrosia 配置
+func LoadAmbrosia() {
+	if ambrosiaCfg != nil {
+		cfg = ambrosiaCfg
 		return
 	}
-	zweiCfg = newCfg(ZweiConfigName, "./zwei")
-	cfg = zweiCfg
+	ambrosiaCfg = newCfg(AmbrosiaConfigName, "./ambrosia")
+	cfg = ambrosiaCfg
 }
 
 // LoadHermes 加载 Hermes 配置
@@ -78,12 +78,12 @@ func LoadChaos() {
 	cfg = chaosCfg
 }
 
-// Zwei 返回 Zwei 配置单例
-func Zwei() *Cfg {
-	if zweiCfg == nil {
-		LoadZwei()
+// Ambrosia 返回 Ambrosia 配置单例
+func Ambrosia() *Cfg {
+	if ambrosiaCfg == nil {
+		LoadAmbrosia()
 	}
-	return zweiCfg
+	return ambrosiaCfg
 }
 
 // Hermes 返回 Hermes 配置单例
@@ -111,7 +111,7 @@ func Chaos() *Cfg {
 }
 
 // Config 返回当前服务配置。
-// 每个进程必须先调用对应的 LoadAegis/LoadHermes/LoadZwei/LoadChaos。
+// 每个进程必须先调用对应的 LoadAegis/LoadHermes/LoadAmbrosia/LoadChaos。
 func Config() *Cfg {
 	if cfg == nil {
 		panic("服务配置未加载")
