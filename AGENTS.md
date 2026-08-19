@@ -5,7 +5,7 @@ This repository contains the domain-independent Go packages shared by Helios ser
 ## Boundaries
 
 - Keep authentication and authorization SDK code in `heliantheon/aegis-go`.
-- Keep protobuf contracts and generated clients in `heliantheon/proto`.
+- Keep the Hermes gRPC contracts in `heliantheon/hermes` under `proto/v1`.
 - Do not import a service repository from this module.
 - Add a package only when it has at least one concrete cross-service use and no domain ownership.
 

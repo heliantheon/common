@@ -2,7 +2,7 @@
 
 Shared Go packages used by the Helios services. This repository is for code that is independent of a product domain: configuration, database and Redis clients, logging, pagination, patch handling, mail, throttling, and small infrastructure helpers.
 
-Authentication-specific code belongs in [`aegis-go`](https://github.com/heliantheon/aegis-go). Service contracts belong in [`proto`](https://github.com/heliantheon/proto).
+Authentication-specific code belongs in [`aegis-go`](https://github.com/heliantheon/aegis-go). Hermes gRPC contracts live in [`hermes`](https://github.com/heliantheon/hermes) under `proto/v1`.
 
 ## Install
 
