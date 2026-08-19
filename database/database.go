@@ -3,7 +3,7 @@ package database
 import (
 	"time"
 
-	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 )
@@ -90,7 +90,7 @@ func WithColorful(colorful bool) Option {
 }
 
 // Connect 连接数据库
-// dsn 格式: user:password@tcp(host:port)/dbname?charset=utf8mb4&parseTime=True&loc=Local
+// dsn 格式: postgres://user:password@host:port/dbname?sslmode=disable
 func Connect(dsn string, opts ...Option) (*gorm.DB, error) {
 	o := defaultOptions()
 	for _, opt := range opts {
@@ -113,7 +113,7 @@ func Connect(dsn string, opts ...Option) (*gorm.DB, error) {
 		gormLog = gormlogger.Default.LogMode(o.logLevel)
 	}
 
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: gormLog,
 	})
 	if err != nil {
