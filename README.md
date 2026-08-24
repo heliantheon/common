@@ -2,6 +2,16 @@
 
 Shared Go packages used by the Helios services. This repository is for code that is independent of a product domain: configuration, database and Redis clients, logging, pagination, patch handling, mail, throttling, and small infrastructure helpers.
 
+The platform-facing packages are intentionally flat:
+
+- `log`: independent `log/slog` JSON loggers with trace/span correlation.
+- `metric`: independent Prometheus registries and safe custom metric helpers.
+- `eventbus`: strict CloudEvents 1.0 over NATS JetStream with PubAck,
+  durable consumers, retry, sanitized DLQ metadata, and graceful drain.
+
+Applications write logs to stdout and expose Prometheus metrics. They do not
+configure an OTLP endpoint; Alloy/Beyla owns collection and trace export.
+
 Authentication-specific code belongs in [`aegis-go`](https://github.com/heliantheon/aegis-go). Hermes gRPC contracts live in [`hermes`](https://github.com/heliantheon/hermes) under `proto/v1`.
 
 ## Install
@@ -25,6 +35,8 @@ make tidy
 ```
 
 The API query conventions implemented by `filter`, `pagination`, and `patch` are documented in [`docs/api-query-design.md`](docs/api-query-design.md).
+
+The logging, metrics, and event bus contracts are documented in [`docs/observability.md`](docs/observability.md).
 
 ## Package policy
 

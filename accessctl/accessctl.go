@@ -7,9 +7,9 @@ package accessctl
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
-	"github.com/heliantheon/common/logger"
 	"github.com/heliantheon/common/throttle"
 )
 
@@ -59,11 +59,16 @@ func (p *Policy) ThrottleAt(threshold int) *Policy {
 // 底层依赖 throttle.Throttler，提供频率限流和验证计数两种能力
 type Manager struct {
 	throttler *throttle.Throttler
+	logger    *slog.Logger
 }
 
 // NewManager 创建访问控制管理器
-func NewManager(t *throttle.Throttler) *Manager {
-	return &Manager{throttler: t}
+func NewManager(t *throttle.Throttler, loggers ...*slog.Logger) *Manager {
+	var logger *slog.Logger
+	if len(loggers) > 0 {
+		logger = loggers[0]
+	}
+	return &Manager{throttler: t, logger: logger}
 }
 
 // ProbeRate 检查频率限流（AND 语义：全部通过才放行）
@@ -88,7 +93,7 @@ func (m *Manager) ProbeRate(ctx context.Context, policies ...*Policy) int {
 	for _, p := range valid {
 		r, err := m.throttler.Peek(ctx, p.Key, p.Limits)
 		if err != nil {
-			logger.Warnf("[AccessCtl] ProbeRate Peek error for key %s: %v", p.Key, err)
+			m.warn(ctx, "access control rate probe failed", "key", p.Key, "error", err)
 			continue
 		}
 		if !r.Allowed {
@@ -100,7 +105,7 @@ func (m *Manager) ProbeRate(ctx context.Context, policies ...*Policy) int {
 	for _, p := range valid {
 		r, err := m.throttler.Allow(ctx, p.Key, p.Limits)
 		if err != nil {
-			logger.Warnf("[AccessCtl] ProbeRate Allow error for key %s: %v", p.Key, err)
+			m.warn(ctx, "access control rate update failed", "key", p.Key, "error", err)
 			continue
 		}
 		if !r.Allowed {
@@ -127,7 +132,7 @@ func (m *Manager) Strike(ctx context.Context, policy *Policy) (ACAction, int) {
 
 	count, err := m.throttler.Record(ctx, policy.Key, policy.Window)
 	if err != nil {
-		logger.Warnf("[AccessCtl] Strike Record error for key %s: %v", policy.Key, err)
+		m.warn(ctx, "access control strike update failed", "key", policy.Key, "error", err)
 		return ACAllowed, 0
 	}
 
@@ -135,4 +140,10 @@ func (m *Manager) Strike(ctx context.Context, policy *Policy) (ACAction, int) {
 		return ACRateLimited, retryAfter
 	}
 	return ACAllowed, 0
+}
+
+func (m *Manager) warn(ctx context.Context, message string, args ...any) {
+	if m.logger != nil {
+		m.logger.WarnContext(ctx, message, args...)
+	}
 }

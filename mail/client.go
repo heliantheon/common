@@ -12,8 +12,6 @@ import (
 	"time"
 
 	"github.com/knadh/smtppool/v2"
-
-	"github.com/heliantheon/common/logger"
 )
 
 const (
@@ -125,7 +123,10 @@ func (c *Client) Send(_ context.Context, msg *Message) error {
 		return fmt.Errorf("empty subject")
 	}
 
-	e := c.toPoolEmail(msg)
+	e, err := c.toPoolEmail(msg)
+	if err != nil {
+		return err
+	}
 	return c.pool.Send(e)
 }
 
@@ -169,7 +170,6 @@ func (c *Client) Verify(ctx context.Context) error {
 	if err := smtpClient.Auth(smtp.PlainAuth("", c.username, c.password, c.host)); err != nil {
 		return fmt.Errorf("authenticate smtp: %w", err)
 	}
-	logger.Debugf("[Mail] SMTP 连接验证成功: %s:%d", c.host, c.port)
 	return nil
 }
 
@@ -181,7 +181,7 @@ func (c *Client) Close() {
 }
 
 // toPoolEmail 将 Message 转换为 smtppool.Email
-func (c *Client) toPoolEmail(msg *Message) smtppool.Email {
+func (c *Client) toPoolEmail(msg *Message) (smtppool.Email, error) {
 	from := msg.From.Address
 	if from == "" {
 		from = c.username
@@ -217,9 +217,11 @@ func (c *Client) toPoolEmail(msg *Message) smtppool.Email {
 	}
 
 	for _, att := range msg.Attachments {
-		if a := convertAttachment(att); a != nil {
-			e.Attachments = append(e.Attachments, *a)
+		a, err := convertAttachment(att)
+		if err != nil {
+			return smtppool.Email{}, err
 		}
+		e.Attachments = append(e.Attachments, a)
 	}
 
 	if len(msg.Headers) > 0 {
@@ -231,14 +233,13 @@ func (c *Client) toPoolEmail(msg *Message) smtppool.Email {
 		}
 	}
 
-	return e
+	return e, nil
 }
 
-func convertAttachment(att Attachment) *smtppool.Attachment {
+func convertAttachment(att Attachment) (smtppool.Attachment, error) {
 	content, err := io.ReadAll(att.Reader)
 	if err != nil {
-		logger.Warnf("[Mail] 读取附件 %s 失败: %v", att.Filename, err)
-		return nil
+		return smtppool.Attachment{}, fmt.Errorf("read attachment %q: %w", att.Filename, err)
 	}
 
 	ct := att.ContentType
@@ -263,5 +264,5 @@ func convertAttachment(att Attachment) *smtppool.Attachment {
 		}
 	}
 
-	return &a
+	return a, nil
 }

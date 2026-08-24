@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/go-json-experiment/json"
-
-	"github.com/heliantheon/common/logger"
 )
 
 // Client 高德地图客户端
@@ -68,9 +66,7 @@ func (c *Client) GetLocation(lat, lng float64) (*Location, error) {
 		return nil, fmt.Errorf("请求高德 API 失败: %w", err)
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Errorf("[Amap] 关闭响应体失败: %v", err)
-		}
+		_ = resp.Body.Close()
 	}()
 
 	var result struct {
@@ -133,9 +129,7 @@ func (c *Client) GetWeatherByAdcode(adcode string) (*Weather, error) {
 		return nil, err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Errorf("[Amap] 关闭响应体失败: %v", err)
-		}
+		_ = resp.Body.Close()
 	}()
 
 	var result struct {

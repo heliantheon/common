@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/go-json-experiment/json"
-
-	"github.com/heliantheon/common/logger"
 )
 
 const (
@@ -94,7 +92,6 @@ func (c *Client) SendMessage(ctx context.Context, req *SendMessageRequest) (*Mes
 		return nil, fmt.Errorf("解析消息失败: %w", err)
 	}
 
-	logger.Debugf("[Telegram] 发送消息成功 - ChatID: %v, MessageID: %d", req.ChatID, msg.MessageID)
 	return &msg, nil
 }
 
@@ -306,9 +303,7 @@ func (c *Client) doRequest(ctx context.Context, method, apiMethod string, body i
 		return nil, fmt.Errorf("请求 Telegram API 失败: %w", err)
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Errorf("[Telegram] 关闭响应体失败: %v", err)
-		}
+		_ = resp.Body.Close()
 	}()
 
 	var result Response

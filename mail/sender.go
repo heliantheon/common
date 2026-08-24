@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/heliantheon/common/logger"
 	"github.com/heliantheon/common/mail/templates"
 )
 
@@ -80,11 +79,8 @@ func (s *Sender) Send(ctx context.Context, to, subject, body string) error {
 		SetHTML(body)
 
 	if err := s.client.Send(ctx, msg); err != nil {
-		logger.Errorf("[Mail] 发送邮件失败 - To: %s, Subject: %s, Error: %v", to, subject, err)
 		return fmt.Errorf("send email failed: %w", err)
 	}
-
-	logger.Infof("[Mail] 发送邮件成功 - To: %s, Subject: %s", to, subject)
 	return nil
 }
 
@@ -95,17 +91,10 @@ func (s *Sender) Send(ctx context.Context, to, subject, body string) error {
 func (s *Sender) SendCode(ctx context.Context, email, code, scene string) error {
 	subject, html, err := s.templateEngine.RenderOTPScene(templates.Scene(scene), code, "")
 	if err != nil {
-		logger.Errorf("[Mail] 渲染 OTP 模板失败: %v", err)
 		return fmt.Errorf("render otp template failed: %w", err)
 	}
 
-	if err := s.send(ctx, email, subject, html); err != nil {
-		logger.Errorf("[Mail] 发送验证码失败 - To: %s, Scene: %s, Error: %v", email, scene, err)
-		return err
-	}
-
-	logger.Infof("[Mail] 发送验证码成功 - To: %s, Scene: %s", email, scene)
-	return nil
+	return s.send(ctx, email, subject, html)
 }
 
 // ==================== 操作邮件 ====================
@@ -114,17 +103,10 @@ func (s *Sender) SendCode(ctx context.Context, email, code, scene string) error 
 func (s *Sender) SendAction(ctx context.Context, email string, scene templates.Scene, actionURL, greeting string) error {
 	subject, html, err := s.templateEngine.RenderActionScene(scene, actionURL, greeting)
 	if err != nil {
-		logger.Errorf("[Mail] 渲染 Action 模板失败: %v", err)
 		return fmt.Errorf("render action template failed: %w", err)
 	}
 
-	if err := s.send(ctx, email, subject, html); err != nil {
-		logger.Errorf("[Mail] 发送操作邮件失败 - To: %s, Scene: %s, Error: %v", email, scene, err)
-		return err
-	}
-
-	logger.Infof("[Mail] 发送操作邮件成功 - To: %s, Scene: %s", email, scene)
-	return nil
+	return s.send(ctx, email, subject, html)
 }
 
 // ==================== 通知邮件 ====================
@@ -133,17 +115,10 @@ func (s *Sender) SendAction(ctx context.Context, email string, scene templates.S
 func (s *Sender) SendNotification(ctx context.Context, email string, scene templates.Scene, details []templates.DetailItem, actionURL, greeting string) error {
 	subject, html, err := s.templateEngine.RenderNotificationScene(scene, details, actionURL, greeting)
 	if err != nil {
-		logger.Errorf("[Mail] 渲染 Notification 模板失败: %v", err)
 		return fmt.Errorf("render notification template failed: %w", err)
 	}
 
-	if err := s.send(ctx, email, subject, html); err != nil {
-		logger.Errorf("[Mail] 发送通知邮件失败 - To: %s, Scene: %s, Error: %v", email, scene, err)
-		return err
-	}
-
-	logger.Infof("[Mail] 发送通知邮件成功 - To: %s, Scene: %s", email, scene)
-	return nil
+	return s.send(ctx, email, subject, html)
 }
 
 // ==================== 便捷方法 ====================

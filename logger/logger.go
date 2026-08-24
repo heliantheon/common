@@ -1,3 +1,6 @@
+// Package logger preserves the legacy Zap-based logging API.
+//
+// Deprecated: new services should use github.com/heliantheon/common/log.
 package logger
 
 import (
@@ -14,15 +17,14 @@ var (
 	Sugar *zap.SugaredLogger
 )
 
-// Config 日志配置
+// Config configures the legacy logger.
 type Config struct {
-	Format string // json 或 console
-	Level  string // debug, info, warn, error
-	Debug  bool   // 是否为调试模式
+	Format string
+	Level  string
+	Debug  bool
 }
 
 func init() {
-	// 确保即使没调用 Init 也能用（使用默认 logger）
 	if Log == nil {
 		var err error
 		Log, err = zap.NewDevelopment()
@@ -33,25 +35,19 @@ func init() {
 	}
 }
 
-// InitWithConfig 使用配置初始化日志
+// InitWithConfig initializes the legacy global logger.
 func InitWithConfig(cfg Config) {
 	var zapCfg zap.Config
-
-	// 根据 format 选择编码器
-	format := strings.ToLower(cfg.Format)
-	if format == "json" {
+	if strings.EqualFold(cfg.Format, "json") {
 		zapCfg = zap.NewProductionConfig()
 		zapCfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	} else {
-		// console 格式
 		zapCfg = zap.NewDevelopmentConfig()
 		zapCfg.EncoderConfig.EncodeLevel = zapcore.CapitalColorLevelEncoder
 		zapCfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout("2006/01/02 15:04:05")
 	}
 
-	// 设置日志级别
-	level := strings.ToLower(cfg.Level)
-	switch level {
+	switch strings.ToLower(cfg.Level) {
 	case "debug":
 		zapCfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 	case "info":
@@ -61,7 +57,6 @@ func InitWithConfig(cfg Config) {
 	case "error":
 		zapCfg.Level = zap.NewAtomicLevelAt(zapcore.ErrorLevel)
 	default:
-		// 未配置时根据 debug 模式决定
 		if cfg.Debug {
 			zapCfg.Level = zap.NewAtomicLevelAt(zapcore.DebugLevel)
 		} else {
@@ -69,7 +64,6 @@ func InitWithConfig(cfg Config) {
 		}
 	}
 
-	// 输出到 stdout
 	zapCfg.OutputPaths = []string{"stdout"}
 	zapCfg.ErrorOutputPaths = []string{"stderr"}
 
@@ -78,101 +72,70 @@ func InitWithConfig(cfg Config) {
 	if err != nil {
 		panic(err)
 	}
-
 	Sugar = Log.Sugar()
 }
 
-// Sync 刷新日志缓冲
+// Sync flushes the legacy logger.
 func Sync() {
 	if Log != nil {
-		// 忽略同步错误，因为日志系统不应该因为同步失败而崩溃
-		// 常见的错误是 "sync /dev/stdout: invalid argument"，这在某些终端是正常的
 		if err := Log.Sync(); err != nil {
-			// 使用 fmt 输出到 stderr，避免递归调用 logger
-			fmt.Fprintf(os.Stderr, "[Logger] sync failed: %v\n", err)
+			_, _ = fmt.Fprintf(os.Stderr, "[Logger] sync failed: %v\n", err)
 		}
 	}
 }
 
-// Debug 调试日志
-func Debug(msg string, fields ...zap.Field) {
-	Log.Debug(msg, fields...)
-}
+// Debug emits a debug record.
+func Debug(msg string, fields ...zap.Field) { Log.Debug(msg, fields...) }
 
-// Info 信息日志
-func Info(msg string, fields ...zap.Field) {
-	Log.Info(msg, fields...)
-}
+// Info emits an informational record.
+func Info(msg string, fields ...zap.Field) { Log.Info(msg, fields...) }
 
-// Warn 警告日志
-func Warn(msg string, fields ...zap.Field) {
-	Log.Warn(msg, fields...)
-}
+// Warn emits a warning record.
+func Warn(msg string, fields ...zap.Field) { Log.Warn(msg, fields...) }
 
-// Error 错误日志
-func Error(msg string, fields ...zap.Field) {
-	Log.Error(msg, fields...)
-}
+// Error emits an error record.
+func Error(msg string, fields ...zap.Field) { Log.Error(msg, fields...) }
 
-// Fatal 致命错误日志（会退出程序）
-func Fatal(msg string, fields ...zap.Field) {
-	Log.Fatal(msg, fields...)
-}
+// Fatal emits a fatal record and exits the process.
+func Fatal(msg string, fields ...zap.Field) { Log.Fatal(msg, fields...) }
 
-// Debugf 格式化调试日志
-func Debugf(template string, args ...interface{}) {
-	Sugar.Debugf(template, args...)
-}
+// Debugf emits a formatted debug record.
+func Debugf(template string, args ...any) { Sugar.Debugf(template, args...) }
 
-// Infof 格式化信息日志
-func Infof(template string, args ...interface{}) {
-	Sugar.Infof(template, args...)
-}
+// Infof emits a formatted informational record.
+func Infof(template string, args ...any) { Sugar.Infof(template, args...) }
 
-// Warnf 格式化警告日志
-func Warnf(template string, args ...interface{}) {
-	Sugar.Warnf(template, args...)
-}
+// Warnf emits a formatted warning record.
+func Warnf(template string, args ...any) { Sugar.Warnf(template, args...) }
 
-// Errorf 格式化错误日志
-func Errorf(template string, args ...interface{}) {
-	Sugar.Errorf(template, args...)
-}
+// Errorf emits a formatted error record.
+func Errorf(template string, args ...any) { Sugar.Errorf(template, args...) }
 
-// Fatalf 格式化致命错误日志
-func Fatalf(template string, args ...interface{}) {
-	Sugar.Fatalf(template, args...)
-}
+// Fatalf emits a formatted fatal record and exits the process.
+func Fatalf(template string, args ...any) { Sugar.Fatalf(template, args...) }
 
-// WithFields 添加字段
-func WithFields(fields ...zap.Field) *zap.Logger {
-	return Log.With(fields...)
-}
+// WithFields returns a child logger with fields.
+func WithFields(fields ...zap.Field) *zap.Logger { return Log.With(fields...) }
 
-// GormWriter 返回 GORM 兼容的日志 writer
-func GormWriter() *GormLogWriter {
-	return &GormLogWriter{}
-}
+// GormWriter returns a GORM-compatible legacy log writer.
+func GormWriter() *GormLogWriter { return &GormLogWriter{} }
 
-// S 方便在没有 zap.Field 时使用
-func S() *zap.SugaredLogger {
-	return Sugar
-}
+// S returns the legacy sugared logger.
+func S() *zap.SugaredLogger { return Sugar }
 
-// L 获取原始 logger
-func L() *zap.Logger {
-	return Log
-}
+// L returns the legacy base logger.
+func L() *zap.Logger { return Log }
 
-// Exit 优雅退出
+// Exit flushes logs and exits the process.
 func Exit(code int) {
 	Sync()
 	os.Exit(code)
 }
 
-// GormLogWriter GORM 日志写入器
+// GormLogWriter adapts the legacy sugared logger to GORM.
 type GormLogWriter struct{}
 
-func (w *GormLogWriter) Printf(format string, args ...interface{}) {
+// Printf implements GORM's logger.Writer interface.
+func (w *GormLogWriter) Printf(format string, args ...any) {
 	Sugar.Infof(format, args...)
 }
