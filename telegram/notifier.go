@@ -3,15 +3,15 @@ package telegram
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"time"
-
-	"github.com/heliantheon/common/logger"
 )
 
 // Notifier 通知发送器，封装常用的消息发送场景
 type Notifier struct {
 	client    *Client
 	defaultTo ChatID
+	logger    *slog.Logger
 }
 
 // NotifyOption 通知选项
@@ -185,10 +185,15 @@ func escapeChar(s string, c rune) string {
 
 // NewNotifier 创建通知发送器
 // defaultTo: 默认发送目标（chat_id 或 @username）
-func NewNotifier(client *Client, defaultTo ChatID) *Notifier {
+func NewNotifier(client *Client, defaultTo ChatID, loggers ...*slog.Logger) *Notifier {
+	var logger *slog.Logger
+	if len(loggers) > 0 {
+		logger = loggers[0]
+	}
 	return &Notifier{
 		client:    client,
 		defaultTo: defaultTo,
+		logger:    logger,
 	}
 }
 
@@ -221,7 +226,9 @@ func (n *Notifier) NotifyAsync(text string, opts ...NotifyOption) {
 		defer cancel()
 
 		if _, err := n.Notify(ctx, text, opts...); err != nil {
-			logger.Errorf("[Telegram] 异步发送通知失败: %v", err)
+			if n.logger != nil {
+				n.logger.ErrorContext(ctx, "send asynchronous Telegram notification failed", "error", err)
+			}
 		}
 	}()
 }
