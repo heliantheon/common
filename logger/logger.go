@@ -4,10 +4,12 @@
 package logger
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -116,6 +118,25 @@ func Fatalf(template string, args ...any) { Sugar.Fatalf(template, args...) }
 
 // WithFields returns a child logger with fields.
 func WithFields(fields ...zap.Field) *zap.Logger { return Log.With(fields...) }
+
+// WithContext returns a logger enriched with the active OpenTelemetry trace
+// identifiers. Invalid contexts are handled without adding empty fields, so
+// the helper is safe to use when tracing is disabled.
+func WithContext(ctx context.Context) *zap.Logger {
+	if ctx == nil {
+		return Log
+	}
+
+	spanContext := trace.SpanContextFromContext(ctx)
+	if !spanContext.IsValid() {
+		return Log
+	}
+
+	return Log.With(
+		zap.String("trace_id", spanContext.TraceID().String()),
+		zap.String("span_id", spanContext.SpanID().String()),
+	)
+}
 
 // GormWriter returns a GORM-compatible legacy log writer.
 func GormWriter() *GormLogWriter { return &GormLogWriter{} }
