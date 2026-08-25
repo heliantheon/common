@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -34,7 +35,7 @@ func TestGinMiddlewareContinuesIncomingTrace(t *testing.T) {
 	})
 
 	const traceID = "4bf92f3577b34da6a3ce929d0e0e4736"
-	request := httptest.NewRequest(http.MethodGet, "/api/test", nil)
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/api/test", nil)
 	request.Header.Set("traceparent", "00-"+traceID+"-00f067aa0ba902b7-01")
 	response := httptest.NewRecorder()
 	router.ServeHTTP(response, request)
@@ -71,7 +72,7 @@ func TestGinMiddlewareExcludesHealthProbe(t *testing.T) {
 	})
 
 	response := httptest.NewRecorder()
-	router.ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/health", nil))
+	router.ServeHTTP(response, httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/health", nil))
 
 	if len(recorder.Ended()) != 0 {
 		t.Fatalf("health probe created %d spans, want 0", len(recorder.Ended()))
