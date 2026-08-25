@@ -6,6 +6,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 // Option 数据库连接选项
@@ -117,6 +118,12 @@ func Connect(dsn string, opts ...Option) (*gorm.DB, error) {
 		Logger: gormLog,
 	})
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Use(tracing.NewPlugin(
+		tracing.WithoutMetrics(),
+		tracing.WithoutQueryVariables(),
+	)); err != nil {
 		return nil, err
 	}
 
