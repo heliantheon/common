@@ -1,6 +1,7 @@
 package observability
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -20,14 +21,19 @@ const TraceIDHeader = "X-Trace-ID"
 
 // GinMiddleware returns the shared HTTP tracing and structured access logging
 // middleware in the required order. Health probes are intentionally excluded
-// to keep traces and logs useful.
-func GinMiddleware(serviceName string) []gin.HandlerFunc {
+// to keep traces and logs useful. New services should inject their slog logger;
+// callers that omit it keep using the legacy Zap logger.
+func GinMiddleware(serviceName string, loggers ...*slog.Logger) []gin.HandlerFunc {
+	var structuredLogger *slog.Logger
+	if len(loggers) > 0 {
+		structuredLogger = loggers[0]
+	}
 	return []gin.HandlerFunc{
 		otelgin.Middleware(serviceName, otelgin.WithFilter(func(req *http.Request) bool {
 			return req.URL.Path != "/health"
 		})),
 		traceResponseHeader(),
-		accessLogger(),
+		accessLogger(structuredLogger),
 	}
 }
 
@@ -51,7 +57,7 @@ func traceResponseHeader() gin.HandlerFunc {
 	}
 }
 
-func accessLogger() gin.HandlerFunc {
+func accessLogger(structuredLogger *slog.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.URL.Path == "/health" {
 			c.Next()
@@ -66,7 +72,24 @@ func accessLogger() gin.HandlerFunc {
 			route = c.Request.URL.Path
 		}
 
-		fields := []zap.Field{
+		if structuredLogger != nil {
+			fields := []any{
+				slog.String("http.request.method", c.Request.Method),
+				slog.String("http.route", route),
+				slog.Int("http.response.status_code", c.Writer.Status()),
+				slog.Int64("http.server.request.duration_ms", time.Since(startedAt).Milliseconds()),
+				slog.String("client.address", c.ClientIP()),
+			}
+			if len(c.Errors) > 0 {
+				fields = append(fields, slog.String("error", c.Errors.String()))
+				structuredLogger.ErrorContext(c.Request.Context(), "HTTP request completed", fields...)
+				return
+			}
+			structuredLogger.InfoContext(c.Request.Context(), "HTTP request completed", fields...)
+			return
+		}
+
+		legacyFields := []zap.Field{
 			zap.String("http.request.method", c.Request.Method),
 			zap.String("http.route", route),
 			zap.Int("http.response.status_code", c.Writer.Status()),
@@ -75,9 +98,9 @@ func accessLogger() gin.HandlerFunc {
 		}
 		requestLogger := logger.WithContext(c.Request.Context())
 		if len(c.Errors) > 0 {
-			requestLogger.Error("HTTP request completed", append(fields, zap.String("error", c.Errors.String()))...)
+			requestLogger.Error("HTTP request completed", append(legacyFields, zap.String("error", c.Errors.String()))...)
 			return
 		}
-		requestLogger.Info("HTTP request completed", fields...)
+		requestLogger.Info("HTTP request completed", legacyFields...)
 	}
 }
