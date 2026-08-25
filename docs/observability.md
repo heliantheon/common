@@ -25,3 +25,41 @@ exhausted failures.
 
 Business event schemas stay in their owning service. In particular, the Chaos
 mail delivery event lives under `chaos/internal/mail`, not in this module.
+
+## Distributed tracing
+
+Heliantheon Go services use OpenTelemetry for distributed traces and keep
+application logs in structured JSON. The shared `observability` package owns
+the transport-neutral setup used by every service.
+
+## Runtime configuration
+
+Tracing is enabled when either `OTEL_EXPORTER_OTLP_ENDPOINT` or
+`OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` is set. Services export OTLP over gRPC and
+honor the standard exporter variables supported by the OpenTelemetry Go
+exporter. Set `OTEL_TRACES_EXPORTER=none` to disable exporting explicitly.
+
+The default root sampler is `parentbased_traceidratio` with a ratio of `0.25`.
+Override it with `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`.
+
+## HTTP and gRPC propagation
+
+HTTP uses the W3C `traceparent`, `tracestate`, and `baggage` headers. gRPC uses
+the same propagator through metadata. A valid incoming parent is continued by
+the service, and each traced HTTP response includes `X-Trace-ID` so clients can
+report the backend trace without exporting browser spans.
+
+`traceparent` and `X-Trace-ID` are correlation data only. They must never be
+used for authentication, authorization, rate-limit identity, or tenancy.
+
+Health probes are excluded from application traces and structured access logs.
+Metrics remain the signal for health and availability monitoring.
+
+## Log correlation
+
+Use `logger.WithContext(ctx)` for application events that need trace
+correlation. It adds `trace_id` and `span_id` only when the context contains a
+valid span. The shared HTTP access logger applies this automatically.
+
+Do not add request bodies, authorization headers, cookies, OAuth codes, email
+addresses, or database query parameters to trace attributes or logs.
