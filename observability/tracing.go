@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -64,7 +65,9 @@ func Init(ctx context.Context, cfg Config) (func(), error) {
 
 	res, err := resource.Merge(resource.Default(), resource.NewSchemaless(attrs...))
 	if err != nil {
-		_ = exporter.Shutdown(ctx)
+		if shutdownErr := exporter.Shutdown(ctx); shutdownErr != nil {
+			err = errors.Join(err, fmt.Errorf("shutdown OTLP trace exporter: %w", shutdownErr))
+		}
 		return func() {}, fmt.Errorf("create OpenTelemetry resource: %w", err)
 	}
 
@@ -78,7 +81,9 @@ func Init(ctx context.Context, cfg Config) (func(), error) {
 	return func() {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		_ = provider.Shutdown(shutdownCtx)
+		if err := provider.Shutdown(shutdownCtx); err != nil {
+			slog.Error("shut down OpenTelemetry trace provider", "error", err)
+		}
 	}, nil
 }
 

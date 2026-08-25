@@ -55,6 +55,18 @@ used for authentication, authorization, rate-limit identity, or tenancy.
 Health probes are excluded from application traces and structured access logs.
 Metrics remain the signal for health and availability monitoring.
 
+## Database tracing
+
+`database.Connect` installs the GORM OpenTelemetry plugin and creates client
+spans for create, query, update, delete, row, and raw operations. Query values
+are excluded from span attributes, and database pool metrics remain owned by
+the metrics pipeline rather than the tracing plugin.
+
+Every request-scoped query must use `db.WithContext(ctx)`. Start transactions
+from that contextual database handle so all statements inherit the incoming
+HTTP or gRPC trace. Background jobs must supply their own bounded context;
+using a bare shared `*gorm.DB` creates an unrelated root span.
+
 ## Log correlation
 
 Use `logger.WithContext(ctx)` for application events that need trace
